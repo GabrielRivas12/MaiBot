@@ -1,0 +1,22 @@
+# fly.toml app configuration file generated for maibot on 2026-11-12T18:55:24Z
+#
+# See https://docs.fly.io/reference/configuration for information about how to use this file.
+#
+
+app = 'maibot'
+primary_region = 'iad'
+swap_size_mb = 256
+
+[http_service]
+  auto_start_machines = true
+  auto_stop_machines = true
+  force_https = true
+  internal_port = 8080
+  min_machines_running = 0
+  processes = ['app']
+
+[[vm]]
+  cpu_kind = 'shared'
+  cpus = 1
+  memory = '1gb'
+  memory_mb = 4096
