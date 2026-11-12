@@ -1,0 +1,23 @@
+{
+  "name": "maibot",
+  "version": "1.0.0",
+  "description": "MaiBot - bot de Discord para un servidor propio",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "node --watch app.js",
+    "deploy": "node src/core/deploy.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@napi-rs/canvas": "^1.1.1",
+    "chart.js": "^4.6.1",
+    "discord.js": "^14.28.1",
+    "dotenv": "^18.0.10",
+    "osu-classes": "^3.1.0",
+    "osu-parsers": "^4.1.7"
+  }
+}
