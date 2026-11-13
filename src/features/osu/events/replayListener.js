@@ -82,7 +82,7 @@ module.exports = {
 
         if (beatmap) {
           const payload = { embeds: [beatmap.embed] };
-          if (beatmap.file) payload.files = [beatmap.file];
+          if (beatmap.preview) payload.files = [beatmap.preview];
           await message.reply(payload);
         }
       } catch (beatmapError) {

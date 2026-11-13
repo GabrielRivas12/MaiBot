@@ -1,9 +1,9 @@
 const {
   SlashCommandBuilder,
   EmbedBuilder,
-  AttachmentBuilder,
 } = require("discord.js");
 const { searchBeatmapsets } = require("../services/osu-api.service");
+const { buildPreview } = require("../services/preview.service");
 
 const EMBED_COLOR = 0x1db954;
 const MAX_DIFFICULTIES = 10;
@@ -13,21 +13,6 @@ function formatDuration(seconds) {
   const minutes = Math.floor(safe / 60);
   const rest = safe % 60;
   return `${minutes}:${String(rest).padStart(2, "0")}`;
-}
-
-function sanitizeFileName(name) {
-  return String(name || "")
-    .replace(/[\\/:*?"<>|]/g, "")
-    .replace(/\s+/g, " ")
-    .trim()
-    .slice(0, 80);
-}
-
-function normalizeUrl(url) {
-  if (!url) return null;
-  if (url.startsWith("http")) return url;
-  if (url.startsWith("//")) return `https:${url}`;
-  return `https:${url}`;
 }
 
 function capitalize(value) {
@@ -84,26 +69,6 @@ function buildEmbed(beatmapset) {
   if (cover) embed.setImage(cover);
 
   return embed;
-}
-
-async function buildPreview(beatmapset) {
-  const url = normalizeUrl(beatmapset.preview_url);
-  if (!url) return null;
-
-  try {
-    const response = await fetch(url, { signal: AbortSignal.timeout(15000) });
-    if (!response.ok) return null;
-
-    const buffer = Buffer.from(await response.arrayBuffer());
-    const base =
-      sanitizeFileName(`${beatmapset.artist} - ${beatmapset.title}`) ||
-      `beatmap-${beatmapset.id}`;
-
-    return new AttachmentBuilder(buffer, { name: `${base}.mp3` });
-  } catch (error) {
-    console.warn("[osu] No pude descargar el preview:", error.message);
-    return null;
-  }
 }
 
 module.exports = {
