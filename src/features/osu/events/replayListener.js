@@ -66,7 +66,7 @@ module.exports = {
           { name: "Duración", value: formatDuration(replay.lengthMs), inline: true }
         )
         .setImage("attachment://replay.png")
-        .setFooter({ text: "Gráfico de vida (HP) generado desde el .osr" })
+        .setFooter({ text: "Gráfico de vida (HP)"})
         .setTimestamp();
 
       await message.reply({

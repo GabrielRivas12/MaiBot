@@ -51,24 +51,17 @@ function formatAccuracy(accuracy) {
   return `${percent.toFixed(2)}%`;
 }
 
-function computeRank({ accuracy, count300, count100, count50, countMiss, mods }) {
-  const percent = accuracy <= 1 ? accuracy * 100 : accuracy;
-  const totalHits = count300 + count100 + count50 + countMiss;
-  const fewMisses = totalHits > 0 && countMiss <= totalHits * 0.01;
-
-  let grade;
-  if (percent >= 100) grade = "SS";
-  else if (percent >= 90 && fewMisses) grade = "S";
-  else if ((percent >= 80 && fewMisses) || percent >= 90) grade = "A";
-  else if ((percent >= 70 && fewMisses) || percent >= 80) grade = "B";
-  else if (percent >= 60) grade = "C";
-  else grade = "D";
-
-  const silver = /HD|FL/.test(mods);
-  if (silver && (grade === "SS" || grade === "S")) grade = `${grade}H`;
-
-  return grade;
-}
+const RANK_LABELS = {
+  X: "SS",
+  XH: "SS",
+  S: "S",
+  SH: "S",
+  A: "A",
+  B: "B",
+  C: "C",
+  D: "D",
+  F: "F",
+};
 
 async function parseReplay(buffer) {
   const score = await decoder.decodeFromBuffer(buffer, true);
@@ -93,16 +86,11 @@ async function parseReplay(buffer) {
     throw new Error("El replay no tiene suficientes datos de vida para graficar.");
   }
 
+  info.passed = true;
+
   return {
     player: info.username || "Desconocido",
-    rank: computeRank({
-      accuracy: info.accuracy,
-      count300: info.count300 ?? 0,
-      count100: info.count100 ?? 0,
-      count50: info.count50 ?? 0,
-      countMiss: info.countMiss ?? 0,
-      mods: formatMods(info.rawMods),
-    }),
+    rank: RANK_LABELS[info.rank] || info.rank,
     score: info.totalScore || 0,
     accuracy: formatAccuracy(info.accuracy),
     maxCombo: info.maxCombo || 0,
