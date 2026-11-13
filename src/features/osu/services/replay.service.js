@@ -82,11 +82,9 @@ async function parseReplay(buffer) {
       health: Math.max(0, Math.min(1, frame.health)),
     }));
 
-  if (lifeBar.length < 2) {
-    throw new Error("El replay no tiene suficientes datos de vida para graficar.");
-  }
-
   info.passed = true;
+
+  const lastLifeTime = lifeBar.length ? lifeBar[lifeBar.length - 1].time : 0;
 
   return {
     player: info.username || "Desconocido",
@@ -99,7 +97,7 @@ async function parseReplay(buffer) {
     count100: info.count100 ?? 0,
     count50: info.count50 ?? 0,
     misses: info.countMiss ?? 0,
-    lengthMs: replay.length || lifeBar[lifeBar.length - 1].time,
+    lengthMs: replay.length || lastLifeTime,
     lifeBar,
   };
 }

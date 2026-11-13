@@ -45,7 +45,6 @@ module.exports = {
 
       const buffer = Buffer.from(await response.arrayBuffer());
       const replay = await parseReplay(buffer);
-      const chart = await renderPerformanceChart(replay);
 
       const embed = new EmbedBuilder()
         .setTitle("Rendimiento del replay")
@@ -68,14 +67,22 @@ module.exports = {
           },
           { name: "Duración", value: formatDuration(replay.lengthMs), inline: true }
         )
-        .setImage("attachment://replay.png")
-        .setFooter({ text: "Gráfico de vida (HP)"})
         .setTimestamp();
 
-      await message.reply({
-        embeds: [embed],
-        files: [new AttachmentBuilder(chart, { name: "replay.png" })],
-      });
+      if (replay.lifeBar.length >= 2) {
+        const chart = await renderPerformanceChart(replay);
+        embed
+          .setImage("attachment://replay.png")
+          .setFooter({ text: "Gráfico de vida (HP)" });
+
+        await message.reply({
+          embeds: [embed],
+          files: [new AttachmentBuilder(chart, { name: "replay.png" })],
+        });
+      } else {
+        embed.setFooter({ text: "Sin datos de vida para graficar" });
+        await message.reply({ embeds: [embed] });
+      }
 
       try {
         const beatmap = await buildReplayBeatmapEmbed(buffer);
