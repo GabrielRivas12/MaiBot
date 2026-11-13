@@ -2,6 +2,9 @@ const { Events, AttachmentBuilder, EmbedBuilder } = require("discord.js");
 const config = require("../../../config");
 const { parseReplay } = require("../services/replay.service");
 const { renderPerformanceChart } = require("../services/chart.service");
+const {
+  buildReplayBeatmapEmbed,
+} = require("../services/beatmap-embed.service");
 
 const MAX_REPLAY_BYTES = 10 * 1024 * 1024;
 
@@ -73,6 +76,21 @@ module.exports = {
         embeds: [embed],
         files: [new AttachmentBuilder(chart, { name: "replay.png" })],
       });
+
+      try {
+        const beatmap = await buildReplayBeatmapEmbed(buffer);
+
+        if (beatmap) {
+          const payload = { embeds: [beatmap.embed] };
+          if (beatmap.file) payload.files = [beatmap.file];
+          await message.reply(payload);
+        }
+      } catch (beatmapError) {
+        console.error(
+          "[osu] Error obteniendo el mapa del replay:",
+          beatmapError
+        );
+      }
     } catch (error) {
       console.error("[osu] Error procesando replay:", error);
       await message
