@@ -1,7 +1,6 @@
 const { EmbedBuilder } = require("discord.js");
 const { ScoreDecoder } = require("osu-parsers");
 const { getAccessToken } = require("./osu-api.service");
-const { buildPreview } = require("./preview.service");
 
 const decoder = new ScoreDecoder();
 const LOOKUP_URL = "https://osu.ppy.sh/api/v2/beatmaps/lookup";
@@ -18,7 +17,7 @@ async function lookupBeatmap(checksum) {
     `${LOOKUP_URL}?checksum=${encodeURIComponent(checksum)}`,
     {
       headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
-      signal: AbortSignal.timeout(20000),
+      signal: AbortSignal.timeout(30000),
     }
   );
 
@@ -79,22 +78,8 @@ function buildBeatmapEmbed(beatmap) {
   return embed;
 }
 
-async function buildReplayBeatmapEmbed(buffer) {
-  const checksum = await extractBeatmapHash(buffer);
-  if (!checksum) return null;
-
-  const beatmap = await lookupBeatmap(checksum);
-  const embed = buildBeatmapEmbed(beatmap);
-  if (!embed) return null;
-
-  const preview = await buildPreview(beatmap.beatmapset);
-
-  return { embed, preview };
-}
-
 module.exports = {
   buildBeatmapEmbed,
-  buildReplayBeatmapEmbed,
   extractBeatmapHash,
   lookupBeatmap,
 };

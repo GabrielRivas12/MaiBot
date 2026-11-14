@@ -26,7 +26,9 @@ Está construido con **discord.js v14**, una arquitectura por *features* y servi
 | 🗓️ | **Calendario** | Muestra un embed por episodio programado para hoy, con hora local, episodio, categoría, portada y enlace a Itadakimasu. |
 | 🔎 | **Buscador de anime** | `/search` con carrusel de resultados, botones *Anterior / Siguiente / Ver info*, sinopsis y datos detallados. |
 | 🎵 | **osu! beatmaps** | `/btm` busca mapas en modo osu!standard, muestra dificultades y adjunta la **preview en MP3**. |
-| 🎮 | **Replays de osu!** | Detecta `.osr` en el canal configurado, genera el **gráfico de vida (HP)**, muestra el resumen del score y un embed del mapa jugado con estadísticas y preview. |
+| 👤 | **Perfiles de osu!** | `/profile`, `/top` y `/rs` muestran perfil, mejores plays y scores recientes. La cuenta se vincula con `/profile accion:Vincular cuenta` y queda guardada en `data/osu-links.json`. |
+| 🎮 | **Replays de osu!** | Detecta `.osr` en el canal configurado, genera el **gráfico de vida (HP)**, muestra el **PP oficial** del score (o `[-]` si no se puede obtener), el resumen de la jugada y un embed del mapa con estadísticas y preview. |
+| 🧹 | **Moderación** | `/clear` (y su alias `/cls`) borra entre 5 y 100 mensajes del canal, conservando los fijados. |
 | 🖼️ | **Emoji → imagen** | Si alguien envía solo un emoji personalizado, lo reenvía como archivo y borra el mensaje original. |
 
 ## 🎮 Comandos
@@ -39,8 +41,14 @@ Está construido con **discord.js v14**, una arquitectura por *features* y servi
 | `/anuncios` | Previsualiza o envía los episodios de hoy. | `modo` (`preview`, `enviar`), `forzar` |
 | `/search` | Busca un anime y navega por los resultados. | `nombre` **(req)**, `pagina` |
 | `/btm` | Busca un beatmap de osu! por nombre. | `nombre` **(req)**, `pagina` |
+| `/profile` | Muestra un perfil de osu!standard. Con `accion:Vincular cuenta` guarda la cuenta para `/top` y `/rs`. | `accion` (`ver`, `vincular`), `usuario` |
+| `/top` | Muestra las mejores plays de osu!standard. | `usuario`, `cantidad` |
+| `/rs` | Muestra los scores recientes de osu!standard. | `usuario`, `cantidad` |
+| `/help` | Lista los comandos disponibles y sus opciones. | — |
+| `/clear` | Borra entre 5 y 100 mensajes del canal (omite fijados y mayores de 14 días). | `cantidad` |
+| `/cls` | Alias de `/clear`. | `cantidad` |
 
-> Los anuncios automáticos se activan con `/calendario activar`. Solo administradores pueden enviar anuncios o cambiar la configuración.
+> Los anuncios automáticos se activan con `/calendario activar`. Solo administradores pueden enviar anuncios o cambiar la configuración. `/clear` y `/cls` requieren **Gestionar mensajes**.
 
 ## ⚙️ Requisitos
 
@@ -109,8 +117,9 @@ MaiBot/
 │  └─ features/
 │     ├─ anime-episodes/   # Anuncios, búsqueda y scheduler
 │     ├─ calendar/         # Comando /calendario
-│     ├─ general/          # /hi, /info y emoji → imagen
-│     └─ osu/              # /btm, replays, gráficos y previews
+│     ├─ general/          # /hi, /info, /help y emoji → imagen
+│     ├─ moderation/       # /clear y /cls
+│     └─ osu/              # /btm, /profile, /top, /rs, replays, gráficos y previews
 ├─ .env.example
 └─ package.json
 ```
@@ -130,6 +139,9 @@ Cada *feature* contiene sus propios `commands/`, `events/` y `services/`. Los ca
 - **Zona horaria:** los anuncios usan `America/Managua` (UTC-6) por defecto; el cron corre a las **9:00** y **14:00**.
 - **Sin duplicados:** los episodios enviados se guardan en `data/anime-sent.json`. Si borras `data/`, es posible que se repitan anuncios.
 - **Replays sin datos de vida:** si un `.osr` no trae suficientes puntos de la barra de vida, se envía el resumen sin gráfico en lugar de fallar.
+- **Enlaces de osu!:** `/profile accion:Vincular cuenta usuario:<tu_usuario>` guarda el vínculo en `data/osu-links.json`; `/top` y `/rs` lo reutilizan sin volver a pedir el usuario. `/profile usuario:<otro_usuario>` solo consulta y **no** modifica tu vínculo. El archivo se escribe de forma atómica y sobrevive reinicios/actualizaciones mientras `data/` esté en un disco persistente.
+- **`/clear`:** requiere **Gestionar mensajes** y **Leer historial de mensajes**. Borra entre 5 y 100 mensajes; omite los fijados y los que tienen más de 14 días (límite de Discord para borrado masivo).
+- **PP del replay:** se obtiene de la API de osu! cuando los conteos y el combo del replay coinciden con un score subido. Si no se puede obtener (replay no subido, score borrado o no es el mejor del jugador con esos mods), se muestra `[-]`.
 - **Emoji → imagen:** funciona en todos los canales; si el bot no puede borrar el original, igual reenvía la imagen.
 - **Intents:** `Guilds`, `GuildMessages` y `MessageContent`.
 

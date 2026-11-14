@@ -2,6 +2,8 @@ const { ScoreDecoder } = require("osu-parsers");
 
 const decoder = new ScoreDecoder();
 
+const FIRST_LAZER_VERSION = 30000000;
+
 const MODS = [
   [1 << 0, "NF"],
   [1 << 1, "EZ"],
@@ -85,6 +87,7 @@ async function parseReplay(buffer) {
   info.passed = true;
 
   const lastLifeTime = lifeBar.length ? lifeBar[lifeBar.length - 1].time : 0;
+  const gameVersion = replay.gameVersion ?? 0;
 
   return {
     player: info.username || "Desconocido",
@@ -93,10 +96,18 @@ async function parseReplay(buffer) {
     accuracy: formatAccuracy(info.accuracy),
     maxCombo: info.maxCombo || 0,
     mods: formatMods(info.rawMods),
+    rawMods: info.rawMods,
     count300: info.count300 ?? 0,
     count100: info.count100 ?? 0,
     count50: info.count50 ?? 0,
+    countGeki: info.countGeki ?? 0,
+    countKatu: info.countKatu ?? 0,
     misses: info.countMiss ?? 0,
+    rulesetId: info.rulesetId ?? 0,
+    userId: info.userId || 0,
+    beatmapHash: info.beatmapHashMD5 || null,
+    gameVersion,
+    isLazer: gameVersion >= FIRST_LAZER_VERSION,
     lengthMs: replay.length || lastLifeTime,
     lifeBar,
   };

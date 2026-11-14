@@ -3,8 +3,11 @@ const config = require("../../../config");
 const { parseReplay } = require("../services/replay.service");
 const { renderPerformanceChart } = require("../services/chart.service");
 const {
-  buildReplayBeatmapEmbed,
+  buildBeatmapEmbed,
+  lookupBeatmap,
 } = require("../services/beatmap-embed.service");
+const { buildPreview } = require("../services/preview.service");
+const { resolvePp } = require("../services/pp.service");
 
 const MAX_REPLAY_BYTES = 10 * 1024 * 1024;
 
@@ -46,6 +49,32 @@ module.exports = {
       const buffer = Buffer.from(await response.arrayBuffer());
       const replay = await parseReplay(buffer);
 
+      const chartPromise =
+        replay.lifeBar.length >= 2
+          ? renderPerformanceChart(replay).catch((error) => {
+              console.error("[osu] Error generando el gráfico:", error);
+              return null;
+            })
+          : Promise.resolve(null);
+
+      let beatmap = null;
+      try {
+        if (replay.beatmapHash) {
+          beatmap = await lookupBeatmap(replay.beatmapHash);
+        }
+      } catch (error) {
+        console.error("[osu] Error obteniendo el mapa del replay:", error);
+      }
+
+      let pp = null;
+      if (beatmap) {
+        try {
+          pp = await resolvePp(beatmap, replay);
+        } catch (error) {
+          console.warn("[osu] No pude calcular el PP:", error.message);
+        }
+      }
+
       const embed = new EmbedBuilder()
         .setTitle("Rendimiento del replay")
         .setColor(0xf472b6)
@@ -69,8 +98,19 @@ module.exports = {
         )
         .setTimestamp();
 
-      if (replay.lifeBar.length >= 2) {
-        const chart = await renderPerformanceChart(replay);
+      if (pp != null) {
+        embed.addFields({
+          name: "PP",
+          value: `${pp.toFixed(2)} pp`,
+          inline: true,
+        });
+      } else {
+        embed.addFields({ name: "PP", value: "[-]", inline: true });
+      }
+
+      const chart = await chartPromise;
+
+      if (chart) {
         embed
           .setImage("attachment://replay.png")
           .setFooter({ text: "Gráfico de vida (HP)" });
@@ -84,19 +124,21 @@ module.exports = {
         await message.reply({ embeds: [embed] });
       }
 
-      try {
-        const beatmap = await buildReplayBeatmapEmbed(buffer);
+      if (beatmap) {
+        try {
+          const beatmapEmbed = buildBeatmapEmbed(beatmap);
 
-        if (beatmap) {
-          const payload = { embeds: [beatmap.embed] };
-          if (beatmap.preview) payload.files = [beatmap.preview];
-          await message.reply(payload);
+          if (beatmapEmbed) {
+            const payload = { embeds: [beatmapEmbed] };
+            const preview = beatmap.beatmapset
+              ? await buildPreview(beatmap.beatmapset)
+              : null;
+            if (preview) payload.files = [preview];
+            await message.reply(payload);
+          }
+        } catch (error) {
+          console.error("[osu] Error enviando el mapa del replay:", error);
         }
-      } catch (beatmapError) {
-        console.error(
-          "[osu] Error obteniendo el mapa del replay:",
-          beatmapError
-        );
       }
     } catch (error) {
       console.error("[osu] Error procesando replay:", error);
