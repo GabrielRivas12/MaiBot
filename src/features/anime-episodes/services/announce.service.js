@@ -52,20 +52,21 @@ function imageUrl(episode) {
 }
 
 function buildEmbed(episode) {
+  const url = itadakimasuUrl(episode);
   const embed = new EmbedBuilder()
     .setTitle(episode.title)
-    .setURL(itadakimasuUrl(episode))
+    .setURL(url)
+    .setDescription(`[Ver en Itadakimasu!](${url})`)
     .setColor(EMBED_COLOR)
     .addFields(
       { name: "Episodio", value: String(episode.episode), inline: true },
-      { name: "Categoría", value: episode.category || "Anime", inline: true },
-      { name: "Proveedor", value: episode.provider || "AnimeAV1", inline: true }
+      { name: "Categoría", value: episode.category || "Anime", inline: true }
     )
-    .setFooter({ text: "Nuevo episodio · AnimeAV1" })
+    .setFooter({ text: "Nuevo episodio" })
     .setTimestamp();
 
   const cover = imageUrl(episode);
-  if (cover) embed.setImage(cover);
+  if (cover) embed.setThumbnail(cover);
 
   return embed;
 }
